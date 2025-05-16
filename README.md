@@ -5,14 +5,14 @@ Assume AWS role and run justfile recipes.
 ## usage
 
 ```yml
-  frontend:
+  backend:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run cloudfront invalidation
-        uses: chrispsheehan/just-aws-oidc-action@0.1.1
+      - name: Deploy api
+        uses: chrispsheehan/terragrunt-aws-oidc-action@0.2.0
         with:
           aws_oidc_role_arn: ${{ vars.AWS_OIDC_ROLE_ARN }}
-          just_action: frontend-refresh
+          tg_directory: infra/live/dev/aws/api
 ```
