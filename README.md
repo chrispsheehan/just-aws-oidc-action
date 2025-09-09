@@ -34,6 +34,14 @@ This GitHub Action sets up [`just`](https://github.com/casey/just), authenticate
 
 ## 🛠 Example Usage
 
+```just
+lambda-get-version:
+    #!/usr/bin/env bash
+    aws lambda get-alias \
+        --function-name "$FUNCTION_NAME" --name "$ALIAS_NAME" \
+        --query 'FunctionVersion' --output text
+```
+
 ```yaml
 jobs:
   run-just:
@@ -45,9 +53,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Execute a Just recipe
-        uses: your-org/just-oidc-action@main
+      - name: get lambda version
+        id: lambda-get-version
+        uses: chrispsheehan/just-aws-oidc-action@0.1.2
+        env:
+          FUNCTION_NAME: dev-lambda-function
+          ALIAS_NAME: dev
         with:
-          just_version: "1.14.0"
-          aws_oidc_role_arn: arn:aws:iam::123456789012:role/github-oidc-role
-          just_action: deploy-api
+          aws_oidc_role_arn: ${{ env.AWS_OIDC_ROLE_ARN }}
+          just_action: lambda-get-version
+
+      - name: read output from script
+        run: |
+          echo "Script output: ${{ steps.lambda-get-version.outputs.just_outputs }}"
+          VERSION="${{ steps.lambda-get-version.outputs.just_outputs }}"
+          echo "Parsed VERSION=$VERSION"
