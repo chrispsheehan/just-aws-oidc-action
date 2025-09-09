@@ -42,17 +42,16 @@ runs:
         AWS_REGION: ${{ inputs.aws_region }}
         AWS_DEFAULT_REGION: ${{ inputs.aws_region }}
       run: |
-        set -euo pipefail
-        echo "📦 Running: ${{ inputs.just_action }}"
+        set +e
+        set -uo pipefail
 
-        if output="$(just ${{ inputs.just_action }} 2>&1)"; then
-          echo "$output"
-          result="$(printf '%s\n' "$output" | tail -n 1 | tr -d '\r')"
-          echo "result=$result" >> "$GITHUB_OUTPUT"
-          echo "✅ just '${{ inputs.just_action }}' succeeded"
-        else
-          code=$?
-          echo "$output"
-          echo "::error::just '${{ inputs.just_action }}' failed (exit $code)"
-          exit "$code"
-        fi
+        LOG_FILE="$RUNNER_TEMP/just_${{ inputs.just_action }}_$(date +%s).log"
+        echo "📦 Running: ${{ inputs.just_action }}"
+        just ${{ inputs.just_action }} 2>&1 | tee "$LOG_FILE"
+        status=${PIPESTATUS[0]}
+
+        # keep your "last line" output behavior
+        result="$(tail -n 1 "$LOG_FILE" | tr -d '\r')"
+        echo "result=$result" >> "$GITHUB_OUTPUT"
+
+        exit "$status"
